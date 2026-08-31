@@ -1,0 +1,8 @@
+Parameter,Value,Status
+Transformation / System,Lig1 -> Lig2 (GROMACS 2024),PASS
+Estimator Method,Thermodynamic Integration (TI),PASS
+Calculated Free Energy,-4.529 ± 0.010 kcal/mol,PASS
+Number of Lambda Windows,11 states,PASS
+Min Adjacent Overlap,63.4% (Mean: 75.1%),PASS
+Forward/Reverse Hysteresis,0.000 kcal/mol (W_diss: 0.000),PASS
+Cycle Closure Error,RMSE = 0.051 kcal/mol (3 cycles),PASS

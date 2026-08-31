@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use FEPCert in your research to validate alchemical free energy simulations, audit lambda-overlap, or evaluate cycle closure, please cite it as below."
+authors:
+  - family-names: "Monreal-Hernández"
+    given-names: "Andre"
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+title: "FEPCert: An Open-Source Toolkit for Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification of Alchemical Free Energy Simulations"
+version: 1.0.0
+date-released: 2026-08-31
+url: "https://github.com/amonreal/fepcert"
+repository-code: "https://github.com/amonreal/fepcert"
+keywords:
+  - "free energy perturbation"
+  - "FEP"
+  - "thermodynamic integration"
+  - "MBAR"
+  - "BAR"
+  - "alchemical transformations"
+  - "cycle closure"
+  - "reproducibility"
+  - "molecular dynamics"
+license: MIT

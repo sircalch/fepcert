@@ -1,0 +1,24 @@
+{
+  "title": "FEPCert: An Open-Source Toolkit for Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification of Alchemical Free Energy Simulations",
+  "description": "An open-source scientific toolkit for rigorous quality assurance, phase space overlap matrix calculation (Bennett/Klimovich criteria), forward-reverse hysteresis evaluation, time-convergence profiling, and thermodynamic cycle closure analysis for alchemical free energy calculations (FEP, TI, BAR, MBAR).",
+  "creators": [
+    {
+      "name": "Monreal-Hernández, Andre",
+      "affiliation": "Doctoral Research Group"
+    }
+  ],
+  "access_right": "open",
+  "license": "MIT",
+  "keywords": [
+    "free energy perturbation",
+    "FEP",
+    "thermodynamic integration",
+    "MBAR",
+    "alchemical free energy",
+    "thermodynamic cycles",
+    "phase space overlap",
+    "reproducibility",
+    "scientific software"
+  ],
+  "upload_type": "software"
+}
