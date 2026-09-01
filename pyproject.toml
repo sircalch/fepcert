@@ -8,7 +8,7 @@ version = "1.0.0"
 description = "Automated Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification for Alchemical Free Energy Calculations (FEP, TI, BAR, MBAR)"
 readme = "README.md"
 authors = [
-    { name = "Andre Monreal-Hernández", email = "amonreal@example.com" }
+    { name = "Andres Monreal-Hernández", email = "amonreal@example.com" }
 ]
 license = { text = "MIT" }
 keywords = [
