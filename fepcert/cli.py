@@ -1,4 +1,4 @@
-"""
+﻿"""
 Command Line Interface (CLI) for FEPCert.
 """
 
@@ -211,11 +211,11 @@ def print_citation():
   year = {2026},
   version = {1.0.0},
   publisher = {Zenodo},
-  url = {https://github.com/amonreal/fepcert}
+  url = {https://github.com/sircalch/fepcert}
 }"""
     print("\nIf you use FEPCert in your publications, please cite:\n")
     print("APA Style:")
-    print("Monreal-Hernández, A. (2026). FEPCert: An Open-Source Toolkit for Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification of Alchemical Free Energy Simulations (v1.0.0). Zenodo. https://github.com/amonreal/fepcert\n")
+    print("Monreal-Hernández, A. (2026). FEPCert: An Open-Source Toolkit for Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification of Alchemical Free Energy Simulations (v1.0.0). Zenodo. https://github.com/sircalch/fepcert\n")
     print("BibTeX:")
     print(bib)
     print()
@@ -279,3 +279,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

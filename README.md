@@ -1,6 +1,6 @@
-# FEPCert
+﻿# FEPCert
 
-[![CI](https://github.com/amonreal/fepcert/actions/workflows/test.yml/badge.svg)](https://github.com/amonreal/fepcert/actions)
+[![CI](https://github.com/sircalch/fepcert/actions/workflows/test.yml/badge.svg)](https://github.com/sircalch/fepcert/actions)
 [![PyPI version](https://img.shields.io/pypi/v/fepcert.svg?color=blue)](https://pypi.org/project/fepcert/)
 [![Python versions](https://img.shields.io/pypi/pyversions/fepcert.svg)](https://pypi.org/project/fepcert/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -71,7 +71,7 @@ pip install fepcert
 
 ### From Source
 ```bash
-git clone https://github.com/amonreal/fepcert.git
+git clone https://github.com/sircalch/fepcert.git
 cd fepcert
 pip install -e .[dev]
 ```
@@ -141,7 +141,7 @@ If you use FEPCert in your research, please cite:
   year = {2026},
   version = {1.0.0},
   publisher = {Zenodo},
-  url = {https://github.com/amonreal/fepcert}
+  url = {https://github.com/sircalch/fepcert}
 }
 ```
 
@@ -150,3 +150,4 @@ If you use FEPCert in your research, please cite:
 ## License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+

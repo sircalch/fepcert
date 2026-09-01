@@ -1,4 +1,4 @@
-"""
+﻿"""
 Manuscript Methods snippet generator, summary tables, and BibTeX citations for FEPCert.
 """
 
@@ -104,7 +104,7 @@ def generate_fepcert_manuscript_assets(
   year = {2026},
   version = {1.0.0},
   publisher = {Zenodo},
-  url = {https://github.com/amonreal/fepcert}
+  url = {https://github.com/sircalch/fepcert}
 }
 """
     with open(bib_path, "w", encoding="utf-8") as f:
@@ -112,3 +112,4 @@ def generate_fepcert_manuscript_assets(
     generated["citation_bib"] = bib_path
 
     return generated
+
