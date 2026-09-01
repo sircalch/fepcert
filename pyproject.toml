@@ -69,3 +69,7 @@ Documentation = "https://github.com/amonreal/fepcert#readme"
 Repository = "https://github.com/amonreal/fepcert.git"
 "Bug Tracker" = "https://github.com/amonreal/fepcert/issues"
 Changelog = "https://github.com/amonreal/fepcert/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+include = ["fepcert*"]
+
