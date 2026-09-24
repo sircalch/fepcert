@@ -65,8 +65,10 @@ In computational drug discovery and biophysics, assessing whether an alchemical 
 ## Installation
 
 ### From PyPI
+> **Note:** PyPI release pending. Until then, install from the tagged GitHub release:
+
 ```bash
-pip install fepcert
+pip install "git+https://github.com/sircalch/fepcert@v1.0.0"
 ```
 
 ### From Source
