@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1234575.svg)](https://doi.org/10.5281/zenodo.1234575)
 
-> **Automated Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification for Alchemical Free Energy Simulations (FEP, TI, BAR, MBAR).**
+> **Automated Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification for Alchemical Free Energy Simulations (FEP, TI, BAR; overlap diagnostics for BAR/MBAR workflows).**
 
 ---
 

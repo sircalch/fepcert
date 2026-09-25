@@ -165,13 +165,15 @@ def calculate_bar_free_energy(
             # Fallback to mean difference
             df_val = float(np.mean(w_fwd)) / beta
             
-        # Asymptotic BAR variance
-        denom_f = np.mean(1.0 / (1.0 + np.exp(w_fwd - (df_val * beta) + c_const)))
-        denom_r = np.mean(1.0 / (1.0 + np.exp(w_rev + (df_val * beta) - c_const)))
-        
-        var_f = (1.0 / max(1e-6, denom_f) - 1.0) / n_f if denom_f > 0 else 0.0
-        var_r = (1.0 / max(1e-6, denom_r) - 1.0) / n_r if denom_r > 0 else 0.0
-        
+        # Asymptotic BAR variance (Shirts, Bair, Hooker & Pande, PRL 2003, 91, 140601):
+        # var(beta*dF) = (<f^2>_F/<f>_F^2 - 1)/n_F + (<f^2>_R/<f>_R^2 - 1)/n_R, f = Fermi function
+        fermi_f = 1.0 / (1.0 + np.exp(w_fwd - (df_val * beta) + c_const))
+        fermi_r = 1.0 / (1.0 + np.exp(w_rev + (df_val * beta) - c_const))
+        mean_f, mean_r = np.mean(fermi_f), np.mean(fermi_r)
+
+        var_f = (np.mean(fermi_f**2) / mean_f**2 - 1.0) / n_f if mean_f > 0 else np.inf
+        var_r = (np.mean(fermi_r**2) / mean_r**2 - 1.0) / n_r if mean_r > 0 else np.inf
+
         var_total = (var_f + var_r) / (beta**2)
         err = np.sqrt(max(0.0, var_total))
         

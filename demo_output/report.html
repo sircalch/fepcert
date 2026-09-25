@@ -105,7 +105,7 @@
         <header class="header">
             <div class="title-group">
                 <h1>FEPCert Free Energy Validation Report</h1>
-                <p>Ligand A -> Ligand B (p38 MAP Kinase) &bull; Thermodynamic Integration (TI) (GROMACS 2024.1)</p>
+                <p>Ligand A -> Ligand B (p38 MAP Kinase) &bull; Thermodynamic Integration (TI) (SYNTHETIC DEMO DATA (GROMACS-like dhdl; not a real calculation))</p>
             </div>
             <div>
                 <span class="status-badge badge-pass">
@@ -137,12 +137,12 @@
                 <div class="card-label">Hysteresis & Dissipation</div>
                 <div class="card-value">
                     
-                    0.00 kcal/mol
+                    0.04 kcal/mol
                     
                 </div>
                 <div class="card-subtext">
                     
-                    W_diss = 0.00 kcal/mol
+                    W_diss = 0.02 kcal/mol
                     
                 </div>
             </div>
@@ -192,10 +192,10 @@
                 
                 <tr>
                     <td><strong>Time-Series Hysteresis</strong></td>
-                    <td>&Delta;&Delta;G_hyst = 0.00 kcal/mol</td>
+                    <td>&Delta;&Delta;G_hyst = 0.04 kcal/mol</td>
                     <td>Hysteresis &le; 0.40 kcal/mol</td>
                     <td><span class="tag tag-pass">PASS</span></td>
-                    <td style="color: var(--text-secondary)">High time-convergence stability (Hysteresis = 0.00 kcal/mol, Late drift = 0.01 kcal/mol).</td>
+                    <td style="color: var(--text-secondary)">High time-convergence stability (Hysteresis = 0.04 kcal/mol, Late drift = 0.01 kcal/mol).</td>
                 </tr>
                 
                 
@@ -214,7 +214,7 @@
 
         <h2 class="section-title">Computational Methods (Publication Ready)</h2>
         <div class="box">
-            <pre id="methodsSnippet">Alchemical free energy calculations for Ligand A -> Ligand B (p38 MAP Kinase) were performed in GROMACS 2024.1. Free energy estimates and convergence quality were systematically audited using FEPCert v1.0.0 (Monreal-Hernández, 2026). The net free energy difference was calculated using Thermodynamic Integration (TI) as Delta G = -4.33 ± 0.01 kcal/mol. Phase space connectivity was certified with a minimum adjacent lambda-state overlap of Pi = 62.5%, exceeding the recommended Klimovich threshold. Time-series convergence was verified by forward-reverse chunking analysis yielding a hysteresis of 0.00 kcal/mol (W_diss = 0.00 kcal/mol). Thermodynamic cycle closure consistency was confirmed across 3 independent cycles with an RMSE of 0.05 kcal/mol. The calculation achieved an overall certification status of: PASS.
+            <pre id="methodsSnippet">Alchemical free energy calculations for Ligand A -> Ligand B (p38 MAP Kinase) were performed in SYNTHETIC DEMO DATA (GROMACS-like dhdl; not a real calculation). Free energy estimates and convergence quality were systematically audited using FEPCert v1.0.0 (Monreal-Hernández, 2026). The net free energy difference was calculated using Thermodynamic Integration (TI) as Delta G = -4.33 ± 0.01 kcal/mol. Phase space connectivity was certified with a minimum adjacent lambda-state overlap of Pi = 62.5%, exceeding the recommended Klimovich threshold. Time-series convergence was verified by forward-reverse chunking analysis yielding a hysteresis of 0.04 kcal/mol (W_diss = 0.02 kcal/mol). Thermodynamic cycle closure consistency was confirmed across 3 independent cycles with an RMSE of 0.05 kcal/mol. The calculation achieved an overall certification status of: PASS.
 </pre>
             <button class="btn-copy" onclick="copyToClipboard('methodsSnippet')">Copy Methods Snippet</button>
         </div>
@@ -227,7 +227,7 @@
   year = {2026},
   version = {1.0.0},
   publisher = {Zenodo},
-  url = {https://github.com/amonreal/fepcert}
+  url = {https://github.com/sircalch/fepcert}
 }
 </pre>
             <button class="btn-copy" onclick="copyToClipboard('bibSnippet')">Copy BibTeX</button>

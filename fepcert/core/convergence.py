@@ -69,8 +69,15 @@ def evaluate_time_convergence(
         rev_dg = float(np.sum(rev_mid * d_lambda))
         rev_dgs.append(rev_dg)
 
-    # Final hysteresis at 100% time
-    final_hysteresis = abs(fwd_dgs[-1] - rev_dgs[-1])
+    # Hysteresis between two disjoint halves of the data (first half vs second half).
+    # At 100% time the forward and reverse chunks contain identical samples, so their
+    # difference is zero by construction and carries no information.
+    half = max(1, min_len // 2)
+    first_means = [np.mean(g[:half]) for g in gradients_time_series]
+    second_means = [np.mean(g[min_len - half:min_len]) for g in gradients_time_series]
+    dg_first = float(np.sum((np.array(first_means[:-1]) + np.array(first_means[1:])) / 2.0 * d_lambda))
+    dg_second = float(np.sum((np.array(second_means[:-1]) + np.array(second_means[1:])) / 2.0 * d_lambda))
+    final_hysteresis = abs(dg_first - dg_second)
     dissipated_work = 0.5 * final_hysteresis
     
     # Max drift across final 40% of time

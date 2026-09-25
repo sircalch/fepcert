@@ -42,7 +42,7 @@ def run_demo(output_dir: str = "fepcert_demo_output"):
     
     metadata = {
         "transformation": "Ligand A -> Ligand B (p38 MAP Kinase)",
-        "engine": "GROMACS 2024.1",
+        "engine": "SYNTHETIC DEMO DATA (GROMACS-like dhdl; not a real calculation)",
         "temperature_k": 298.15
     }
     

@@ -33,7 +33,7 @@ def main():
     
     # 2. Assess free energy convergence
     report = assess_fep_quality(
-        metadata={"transformation": "Lig1 -> Lig2", "engine": "GROMACS 2024"},
+        metadata={"transformation": "Lig1 -> Lig2", "engine": "SYNTHETIC DEMO DATA"},
         lambda_values=fep_data["lambda_values"],
         gradients_list=fep_data["gradients_list"],
         network_edges=network_edges,
