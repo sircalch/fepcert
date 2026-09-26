@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fepcert"
-version = "1.0.0"
+version = "1.1.0"
 description = "Automated Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification for Alchemical Free Energy Calculations (FEP, TI, BAR, MBAR)"
 readme = "README.md"
 authors = [

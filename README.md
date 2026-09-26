@@ -90,8 +90,12 @@ Open `my_fep_audit/report.html` in any browser to inspect the interactive report
 
 ### 2. Assess GROMACS dhdl Files
 ```bash
-fepcert assess -d gromacs_fep_run/ --pattern "dhdl*.xvg" -o fep_report/
+fepcert assess -d gromacs_fep_run/ --pattern "dhdl*.xvg*" -o fep_report/
+# one sub-directory per window (e.g. 0000/dhdl.xvg.bz2):
+fepcert assess -d gromacs_fep_run/ --pattern "dhdl.xvg*" --recursive -o fep_report/
 ```
+
+Lambda values, temperature and the energy unit are read from each file header (`fep-lambda = 0.2000`, `(coul-lambda, vdw-lambda) = (...)`), and dH/dλ columns are identified by their legends. Windows are ordered by their header λ, never by file name; if λ cannot be read, FEPCert stops with an error instead of guessing. GROMACS energies (kJ/mol) are converted to the reporting unit (`--unit`, default kcal/mol). Analyse each leg (e.g. Coulomb and van der Waals) in its own directory.
 
 ### 3. Audit Thermodynamic Cycle Closure in a Chemical Network
 ```bash
@@ -99,6 +103,28 @@ fepcert cycle -i perturbation_network.csv -o cycle_report/
 ```
 
 ---
+
+## Validation
+
+`validation/validate_alchemtest.py` compares FEPCert with alchemlyb 2.5 on the real GROMACS benzene
+decoupling data set of `alchemtest` (2 legs, 21 windows of 40 ns). The raw `.xvg.bz2` files are read directly.
+
+| Leg | TI FEPCert (kJ/mol) | TI alchemlyb | BAR FEPCert | BAR alchemlyb |
+|---|---|---|---|---|
+| Coulomb | 7.705 ± 0.054 | 7.705 ± 0.054 | 7.594 ± 0.041 | 7.594 ± 0.041 |
+| VDW | −7.622 ± 0.123 | −7.622 ± 0.121 | −7.565 ± 0.086 | −7.565 ± 0.086 |
+
+The TI standard error of each window is corrected for autocorrelation (s·√(g/n)). This is why the VDW TI
+error is slightly larger than alchemlyb's default.
+
+Version 1.1.0 corrects the following defects found by this validation:
+
+- λ was not read from real GROMACS headers and was then assigned by lexicographic file order. VDW gave
+  −11.66 instead of −7.62 kJ/mol.
+- Values in kJ/mol were labelled as kcal/mol without conversion.
+- The trapezoid error ignored that interior windows enter two intervals.
+- The TI standard error ignored autocorrelation.
+- The BAR variance and the hysteresis metric were corrected earlier; see the git history.
 
 ## Python API Usage
 
@@ -108,14 +134,17 @@ from fepcert.parsers import parse_gromacs_dhdl_directory, parse_perturbation_net
 from fepcert.reporters import generate_fepcert_figures, generate_fepcert_manuscript_assets, generate_fepcert_html_report
 
 # 1. Parse GROMACS directory & perturbation network
-data = parse_gromacs_dhdl_directory("fep_simulations/", file_pattern="dhdl*.xvg")
+from fepcert.cli import convert_energy_unit
+
+data = parse_gromacs_dhdl_directory("fep_simulations/", file_pattern="dhdl*.xvg*")
+grads = convert_energy_unit(data["gradients_list"], data["unit"], "kcal/mol")  # GROMACS writes kJ/mol
 network = parse_perturbation_network_csv("network.csv")
 
 # 2. Assess free energy convergence
 report = assess_fep_quality(
     metadata={"transformation": "Lig1 -> Lig2", "engine": "GROMACS 2024"},
     lambda_values=data["lambda_values"],
-    gradients_list=data["gradients_list"],
+    gradients_list=grads,
     network_edges=network,
     unit="kcal/mol"
 )

@@ -8,6 +8,35 @@ import numpy as np
 from scipy import integrate, optimize
 
 
+def statistical_inefficiency(series: np.ndarray, c_window: float = 6.0) -> float:
+    """
+    Statistical inefficiency g = 1 + 2 * sum_k C(k) of a correlated timeseries, using the
+    Madras-Sokal self-consistent window (stop at the first negative C(k) or when
+    k >= c_window * tau_int). Returns 1.0 for series shorter than 4 samples.
+    """
+    x = np.asarray(series, dtype=float)
+    x = x[np.isfinite(x)]
+    n = len(x)
+    if n < 4:
+        return 1.0
+    xc = x - x.mean()
+    var = float(np.dot(xc, xc) / n)
+    if var == 0.0:
+        return 1.0
+    n_fft = 2 ** int(np.ceil(np.log2(2 * n - 1)))
+    f = np.fft.rfft(xc, n=n_fft)
+    acov = np.fft.irfft(f * np.conjugate(f), n=n_fft)[:n] / (n - np.arange(n))
+    acf = acov / var
+    tau = 0.5
+    for k in range(1, n // 2):
+        if acf[k] < 0:
+            break
+        tau += acf[k]
+        if k >= c_window * tau:
+            break
+    return max(1.0, 2.0 * tau)
+
+
 @dataclass
 class FreeEnergyResult:
     method: str  # 'TI', 'BAR', 'MBAR'
@@ -58,8 +87,8 @@ def calculate_ti_free_energy(
             errors.append(0.0)
         else:
             m = np.mean(g_clean)
-            # Standard error of the mean
-            sem = np.std(g_clean, ddof=1) / np.sqrt(n) if n > 1 else 0.0
+            # Standard error of the mean corrected for autocorrelation: s * sqrt(g / n)
+            sem = np.std(g_clean, ddof=1) * np.sqrt(statistical_inefficiency(g_clean) / n) if n > 1 else 0.0
             means.append(float(m))
             errors.append(float(sem))
 
@@ -77,9 +106,13 @@ def calculate_ti_free_energy(
 
     total_dg = float(cumulative_dg[-1])
     
-    # Error propagation for trapezoid rule: sigma^2 = sum ( Delta\lambda_i / 2 )^2 * (sigma_i^2 + sigma_{i+1}^2)
-    var_terms = (d_lambda / 2.0)**2 * (errors[:-1]**2 + errors[1:]**2)
-    total_error = float(np.sqrt(np.sum(var_terms)))
+    # Error propagation for the trapezoid rule. Delta G = sum_i w_i * <dH/dl>_i with
+    # w_0 = dl_0/2, w_i = (dl_{i-1} + dl_i)/2 for interior windows, w_K = dl_{K-1}/2, so
+    # var(Delta G) = sum_i w_i^2 * sigma_i^2 (interior windows enter both adjacent intervals).
+    weights = np.zeros(k)
+    weights[:-1] += d_lambda / 2.0
+    weights[1:] += d_lambda / 2.0
+    total_error = float(np.sqrt(np.sum((weights * errors) ** 2)))
 
     if total_error <= 0.30:
         status = "PASS"

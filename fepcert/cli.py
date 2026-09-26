@@ -111,6 +111,21 @@ def run_demo(output_dir: str = "fepcert_demo_output"):
     print(f"Open {os.path.abspath(html_p)} in your browser to inspect the full report.\n")
 
 
+KJ_PER_KCAL = 4.184
+
+
+def convert_energy_unit(gradients_list, from_unit, to_unit):
+    """Converts dH/dlambda samples between kJ/mol and kcal/mol."""
+    f, t = from_unit.lower(), to_unit.lower()
+    if f == t:
+        return gradients_list
+    if f == "kj/mol" and t == "kcal/mol":
+        return [np.asarray(g, dtype=float) / KJ_PER_KCAL for g in gradients_list]
+    if f == "kcal/mol" and t == "kj/mol":
+        return [np.asarray(g, dtype=float) * KJ_PER_KCAL for g in gradients_list]
+    raise ValueError(f"Unsupported unit conversion {from_unit} -> {to_unit}")
+
+
 def run_assess(args):
     """
     Evaluates user-provided GROMACS directory or CSV file.
@@ -120,9 +135,15 @@ def run_assess(args):
     
     if args.dir:
         print(f"\n[FEPCert] Parsing GROMACS dhdl.xvg files from directory: {args.dir}...")
-        data = parse_gromacs_dhdl_directory(args.dir, file_pattern=args.pattern or "dhdl*.xvg")
+        data = parse_gromacs_dhdl_directory(args.dir, file_pattern=args.pattern or "dhdl*.xvg*",
+                                            recursive=bool(getattr(args, "recursive", False)))
         lambdas = data["lambda_values"]
-        grads = data["gradients_list"]
+        grads = convert_energy_unit(data["gradients_list"], data["unit"], args.unit)
+        print(f"  -> {data['n_windows']} windows, component '{data['component']}-lambda', "
+              f"read in {data['unit']}, reported in {args.unit}.")
+        if data.get("temperature_k") and abs(data["temperature_k"] - float(args.temperature)) > 0.5:
+            print(f"  [Warning] --temperature {args.temperature} K differs from the dhdl header "
+                  f"({data['temperature_k']} K).", file=sys.stderr)
     elif args.input:
         print(f"\n[FEPCert] Parsing alchemical table from: {args.input}...")
         data = parse_generic_fep_csv(args.input)
@@ -234,13 +255,14 @@ def main():
     assess_parser = subparsers.add_parser("assess", help="Assess alchemical free energy calculations (TI / BAR / Overlap)")
     assess_parser.add_argument("-i", "--input", default=None, help="Path to alchemical CSV/TSV table")
     assess_parser.add_argument("-d", "--dir", default=None, help="Directory containing GROMACS dhdl*.xvg files")
-    assess_parser.add_argument("--pattern", default="dhdl*.xvg", help="File pattern for GROMACS files (default: dhdl*.xvg)")
+    assess_parser.add_argument("--pattern", default="dhdl*.xvg*", help="File pattern for GROMACS files, compressed .gz/.bz2/.xz accepted (default: dhdl*.xvg*)")
     assess_parser.add_argument("--network", default=None, help="Path to perturbation network CSV for cycle closure")
     assess_parser.add_argument("-o", "--output", default="fepcert_output", help="Directory for output report and assets (default: fepcert_output)")
     assess_parser.add_argument("--name", default=None, help="Transformation description (e.g. 'Lig1 -> Lig2')")
     assess_parser.add_argument("--engine", default="GROMACS", help="Simulation engine (GROMACS, AMBER, NAMD, OpenMM)")
     assess_parser.add_argument("--temperature", default=298.15, help="Simulation temperature in Kelvin (default: 298.15)")
-    assess_parser.add_argument("--unit", default="kcal/mol", help="Energy unit: kcal/mol or kJ/mol (default: kcal/mol)")
+    assess_parser.add_argument("--unit", default="kcal/mol", help="Energy unit for reporting: kcal/mol or kJ/mol (default: kcal/mol). GROMACS input is read in kJ/mol and converted.")
+    assess_parser.add_argument("--recursive", action="store_true", help="Search sub-directories for dhdl files (one directory per lambda window)")
 
     # Cycle command
     cycle_parser = subparsers.add_parser("cycle", help="Audit thermodynamic cycle closure in chemical perturbation network")

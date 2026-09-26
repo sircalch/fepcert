@@ -86,7 +86,7 @@ def generate_fepcert_manuscript_assets(
 
     full_methods = (
         f"Alchemical free energy calculations for {trans_str} were performed in {engine_str}. "
-        f"Free energy estimates and convergence quality were systematically audited using FEPCert v1.0.0 (Monreal-Hernández, 2026). "
+        f"Free energy estimates and convergence quality were systematically audited using FEPCert v1.1.0 (Monreal-Hernández, 2026). "
         f"The net free energy difference was calculated using {fe.method} as Delta G = {fe.delta_g:.2f} \u00b1 {fe.delta_g_error:.2f} {fe.unit}. "
         f"{ov_str}{cr_str}{cy_str}"
         f"The calculation achieved an overall certification status of: {report.overall_status}."
@@ -102,7 +102,7 @@ def generate_fepcert_manuscript_assets(
   author = {Monreal-Hern\\'andez, Andre},
   title = {{FEPCert: An Open-Source Toolkit for Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification of Alchemical Free Energy Simulations}},
   year = {2026},
-  version = {1.0.0},
+  version = {1.1.0},
   publisher = {Zenodo},
   url = {https://github.com/sircalch/fepcert}
 }

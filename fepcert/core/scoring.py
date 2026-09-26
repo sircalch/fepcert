@@ -125,7 +125,7 @@ def assess_fep_quality(
         recommendations=recommendations,
         provenance={
             "tool": "FEPCert",
-            "version": "1.0.0",
+            "version": "1.1.0",
             "citation": "Monreal-Hernández, A. (2026). FEPCert: An Open-Source Toolkit for Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification of Alchemical Free Energy Simulations."
         }
     )

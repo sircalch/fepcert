@@ -1,0 +1,7 @@
+{
+  "fepcert": "1.0.0",
+  "alchemlyb": "2.5.0",
+  "dataset": "alchemtest.gmx.load_benzene",
+  "temperature_K": 300.0,
+  "unit": "kJ/mol"
+}
