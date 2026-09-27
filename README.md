@@ -4,7 +4,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/fepcert.svg?color=blue)](https://pypi.org/project/fepcert/)
 [![Python versions](https://img.shields.io/pypi/pyversions/fepcert.svg)](https://pypi.org/project/fepcert/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1234575.svg)](https://doi.org/10.5281/zenodo.1234575)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22217579.svg)](https://doi.org/10.5281/zenodo.22217579)
 
 > **Automated Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification for Alchemical Free Energy Simulations (FEP, TI, BAR; overlap diagnostics for BAR/MBAR workflows).**
 
