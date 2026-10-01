@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.0 (2026-09-30)
+## 1.2.0 (2026-10-01)
 
 Validated on real GROMACS data (alchemtest: benzene and ethanol hydration, the ligand and complex
 legs of an absolute binding free energy in T4 lysozyme, a water particle; full, truncated and
