@@ -24,7 +24,8 @@ def evaluate_time_convergence(
     gradients_time_series: List[np.ndarray],
     n_fractions: int = 10,
     max_pass_hysteresis: float = 0.40,
-    max_warn_hysteresis: float = 0.80
+    max_warn_hysteresis: float = 0.80,
+    unit: str = "kcal/mol"
 ) -> ConvergenceAnalysisResult:
     """
     Evaluates cumulative forward and reverse TI convergence as a function of simulation time.
@@ -39,6 +40,9 @@ def evaluate_time_convergence(
         Number of time evaluation checkpoints (10%, 20%, ..., 100%).
     max_pass_hysteresis : float, default 0.40 kcal/mol
     max_warn_hysteresis : float, default 0.80 kcal/mol
+        Thresholds are always in kcal/mol; they are converted when the gradients are in kJ/mol.
+    unit : str, default 'kcal/mol'
+        Unit of the gradients ('kcal/mol' or 'kJ/mol').
 
     Returns
     -------
@@ -85,15 +89,17 @@ def evaluate_time_convergence(
     late_vals = fwd_dgs[late_idx:]
     max_drift = float(np.max(late_vals) - np.min(late_vals)) if len(late_vals) > 1 else 0.0
 
+    to_unit = 4.184 if unit.lower() == "kj/mol" else 1.0
+    max_pass_hysteresis, max_warn_hysteresis = max_pass_hysteresis * to_unit, max_warn_hysteresis * to_unit
     if final_hysteresis <= max_pass_hysteresis and max_drift <= max_pass_hysteresis:
         status = "PASS"
-        diag = f"High time-convergence stability (Hysteresis = {final_hysteresis:.2f} kcal/mol, Late drift = {max_drift:.2f} kcal/mol)."
+        diag = f"High time-convergence stability (Hysteresis = {final_hysteresis:.2f} {unit}, Late drift = {max_drift:.2f} {unit})."
     elif final_hysteresis <= max_warn_hysteresis:
         status = "WARNING"
-        diag = f"Moderate convergence drift (Hysteresis = {final_hysteresis:.2f} kcal/mol). Transformation is approaching plateau but has mild fluctuations."
+        diag = f"Moderate convergence drift (Hysteresis = {final_hysteresis:.2f} {unit}). Transformation is approaching plateau but has mild fluctuations."
     else:
         status = "FAIL"
-        diag = f"Severe convergence hysteresis ({final_hysteresis:.2f} kcal/mol > {max_warn_hysteresis:.2f} kcal/mol). Trajectory is trapped in non-equilibrated conformational states."
+        diag = f"Severe convergence hysteresis ({final_hysteresis:.2f} {unit} > {max_warn_hysteresis:.2f} {unit}) between the first and second halves of the data; the estimate is not converged."
 
     return ConvergenceAnalysisResult(
         time_fractions=fractions.tolist(),

@@ -1,4 +1,4 @@
-﻿# FEPCert
+# FEPCert
 
 [![CI](https://github.com/sircalch/fepcert/actions/workflows/test.yml/badge.svg)](https://github.com/sircalch/fepcert/actions)
 [![PyPI version](https://img.shields.io/pypi/v/fepcert.svg?color=blue)](https://pypi.org/project/fepcert/)
@@ -6,29 +6,21 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22217579.svg)](https://doi.org/10.5281/zenodo.22217579)
 
-> **Automated Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification for Alchemical Free Energy Simulations (FEP, TI, BAR; overlap diagnostics for BAR/MBAR workflows).**
+> **Quality checks for alchemical free-energy calculations: TI and BAR, phase-space overlap, time convergence and cycle closure.**
 
 ---
 
 ## Overview
 
-**FEPCert** is an open-source scientific software package designed to systematically audit, validate, and certify the statistical convergence, phase space connectivity, and internal consistency of alchemical free energy calculations (Free Energy Perturbation, Thermodynamic Integration, Bennett Acceptance Ratio, and Multistate BAR) from simulation engines such as **GROMACS**, **AMBER**, **NAMD**, and **OpenMM**.
+**FEPCert** is an open-source Python package that checks alchemical free-energy calculations (TI and BAR, GROMACS dhdl.xvg or tables) and perturbation networks, and reports PASS / WARNING / FAIL / not applicable for each check.
 
-In computational drug discovery and biophysics, assessing whether an alchemical relative binding free energy ($\Delta\Delta G_{\text{bind}}$) calculation has converged is essential to prevent false predictions:
+- **TI and BAR**: trapezoidal TI with autocorrelation-corrected errors, including paths in which several lambda components change (bonded, Coulomb, van der Waals); BAR with the asymptotic variance of Shirts et al. (2003). Both match alchemlyb.
+- **Phase-space overlap**: two-state MBAR overlap of every pair of neighbouring states from the forward and reverse work (read from the Delta H columns of GROMACS files), with the 0.03 threshold of Klimovich et al. (2015). With dH/dlambda only, the check is reported as not applicable.
+- **Time convergence**: TI from the first and second halves of the data, and forward/backward estimates.
+- **Cycle closure**: every simple cycle up to four edges of a perturbation network, its closure error and, when edge uncertainties are given, its z-score against the combined uncertainty.
 
-- 📊 **Phase Space Overlap Matrix ($\Pi_{ij}$)**:
-  - Computes pairwise probability density overlap between adjacent $\lambda$-states ($\Pi_{k, k+1}$).
-  - Enforces the Klimovich criterion ($\min \Pi_{k, k+1} \ge 0.03$, 3%) to guarantee unbiased BAR/MBAR reweighting.
-  - Automatically flags phase space bottlenecks where intermediate $\lambda$-windows are required.
-- 📐 **Thermodynamic Integration (TI) & BAR**:
-  - Exact numerical quadrature of $\langle \partial H/\partial\lambda \rangle_\lambda$ with standard error propagation.
-  - Self-consistent Bennett Acceptance Ratio (BAR) solution with asymptotic variance error bounds.
-- ⏳ **Time-Series Convergence & Hysteresis**:
-  - Compares forward cumulative $\Delta G(t)$ and reverse cumulative $\Delta G(t)$ trajectories.
-  - Quantifies dissipated work $W_{\text{diss}} = \frac{1}{2}|\Delta G_{\text{fwd}} + \Delta G_{\text{rev}}|$ and flags simulations trapped in metastable conformations.
-- 🔄 **Thermodynamic Cycle Closure ($\oint \Delta\Delta G \approx 0$)**:
-  - Graph-based cycle detection (e.g. triangles $L_1 \rightarrow L_2 \rightarrow L_3 \rightarrow L_1$ and quadrilaterals).
-  - Computes cycle closure error $\sum_{(i,j) \in C} \Delta\Delta G_{ij}$ and overall cycle $\text{RMSE} \le 0.50$ kcal/mol.
+> **Version 1.2.0** was validated on real GROMACS data (alchemtest, 28 analyses) against alchemlyb and pymbar, and on the 92 maps of the public FEP+ benchmark (1404 cycles). It corrects an overlap metric that did not measure overlap, cycles missed by the enumeration and thresholds that ignored the energy unit; see the CHANGELOG.
+
 - 📑 **Publication Deliverables**:
   - Interactive self-contained `report.html` dashboard.
   - Publication vector plots (Overlap matrix heatmap $\Pi_{ij}$, $\langle \partial H/\partial\lambda \rangle$ integration curve, forward/reverse convergence lines) in SVG, PDF, PNG (300 DPI).

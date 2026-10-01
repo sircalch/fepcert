@@ -1,4 +1,4 @@
-﻿"""
+"""
 Command Line Interface (CLI) for FEPCert.
 """
 
@@ -138,9 +138,18 @@ def run_assess(args):
         data = parse_gromacs_dhdl_directory(args.dir, file_pattern=args.pattern or "dhdl*.xvg*",
                                             recursive=bool(getattr(args, "recursive", False)))
         lambdas = data["lambda_values"]
-        grads = convert_energy_unit(data["gradients_list"], data["unit"], args.unit)
-        print(f"  -> {data['n_windows']} windows, component '{data['component']}-lambda', "
-              f"read in {data['unit']}, reported in {args.unit}.")
+        grads = convert_energy_unit(data["gradients_list"], data["unit"], args.unit) if data["gradients_list"] else None
+        fw = convert_energy_unit(data["forward_work_list"], data["unit"], args.unit) if data.get("forward_work_list") else None
+        rw = convert_energy_unit(data["reverse_work_list"], data["unit"], args.unit) if data.get("reverse_work_list") else None
+        multi = None
+        if data["component"] == "multi":
+            multi = {"lambda_matrix": data["lambda_matrix"], "components": data["components"],
+                     "gradients_by_component": [{c: convert_energy_unit([w[c]], data["unit"], args.unit)[0] for c in w}
+                                                for w in data["gradients_by_component"]]}
+            lambdas = list(range(data["n_windows"]))
+        comp_txt = "+".join(data["components"]) if multi else data["component"]
+        print(f"  -> {data['n_windows']} windows, lambda component(s) '{comp_txt}', read in {data['unit']}, "
+              f"reported in {args.unit}; neighbour work {'found' if fw else 'not found'} in the files.")
         if data.get("temperature_k") and abs(data["temperature_k"] - float(args.temperature)) > 0.5:
             print(f"  [Warning] --temperature {args.temperature} K differs from the dhdl header "
                   f"({data['temperature_k']} K).", file=sys.stderr)
@@ -149,6 +158,7 @@ def run_assess(args):
         data = parse_generic_fep_csv(args.input)
         lambdas = data["lambda_values"]
         grads = data["gradients_list"]
+        fw = rw = multi = None
     else:
         print("[Error] Please specify either an input directory with --dir or a file with --input.", file=sys.stderr)
         sys.exit(1)
@@ -169,9 +179,12 @@ def run_assess(args):
         metadata=meta,
         lambda_values=lambdas,
         gradients_list=grads,
+        forward_work_list=fw,
+        reverse_work_list=rw,
         network_edges=network_edges,
         temperature_k=float(args.temperature),
-        unit=args.unit
+        unit=args.unit,
+        multi_component=multi
     )
 
     print("  -> Generating publication figures...")
@@ -194,8 +207,12 @@ def run_assess(args):
     print(f" [SCORE]  {report.validation_score}")
     print("="*70)
     print(f" * Free Energy : Delta G = {report.free_energy.delta_g:.2f} \u00b1 {report.free_energy.delta_g_error:.2f} {report.free_energy.unit}")
+    if "bar_delta_g" in report.metadata:
+        print(f" * BAR check   : Delta G = {report.metadata['bar_delta_g']:.2f} \u00b1 {report.metadata['bar_delta_g_error']:.2f}"
+              f" {report.free_energy.unit} (TI - BAR = {report.metadata['ti_minus_bar']:.2f})")
     if report.overlap_result:
-        print(f" * Overlap     : Min adjacent Pi = {report.overlap_result.min_adjacent_overlap*100:.1f}%")
+        print(f" * Overlap     : {report.overlap_result.status}, smallest neighbouring-state overlap "
+              f"{report.overlap_result.min_adjacent_overlap:.3f}")
     print("="*70)
     print(f"\nReport ready at: {os.path.abspath(html_p)}\n")
 
@@ -230,13 +247,13 @@ def print_citation():
   author = {Monreal-Hern\\'andez, Andre},
   title = {{FEPCert: An Open-Source Toolkit for Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification of Alchemical Free Energy Simulations}},
   year = {2026},
-  version = {1.0.0},
+  version = {1.2.0},
   publisher = {Zenodo},
   url = {https://github.com/sircalch/fepcert}
 }"""
     print("\nIf you use FEPCert in your publications, please cite:\n")
     print("APA Style:")
-    print("Monreal-Hernández, A. (2026). FEPCert: An Open-Source Toolkit for Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification of Alchemical Free Energy Simulations (v1.0.0). Zenodo. https://github.com/sircalch/fepcert\n")
+    print(f"Monreal-Hernández, A. (2026). FEPCert: An Open-Source Toolkit for Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification of Alchemical Free Energy Simulations (v{__import__('fepcert').__version__}). Zenodo. https://github.com/sircalch/fepcert\n")
     print("BibTeX:")
     print(bib)
     print()

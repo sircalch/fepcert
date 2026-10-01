@@ -114,15 +114,16 @@ def calculate_ti_free_energy(
     weights[1:] += d_lambda / 2.0
     total_error = float(np.sqrt(np.sum((weights * errors) ** 2)))
 
-    if total_error <= 0.30:
+    to_unit = 4.184 if unit.lower() == "kj/mol" else 1.0  # thresholds are defined in kcal/mol
+    if total_error <= 0.30 * to_unit:
         status = "PASS"
         diag = f"TI integration converged with high precision (Delta G = {total_dg:.2f} \u00b1 {total_error:.2f} {unit})."
-    elif total_error <= 0.80:
+    elif total_error <= 0.80 * to_unit:
         status = "WARNING"
         diag = f"TI integration has moderate statistical error (Delta G = {total_dg:.2f} \u00b1 {total_error:.2f} {unit}). Extended sampling recommended."
     else:
         status = "FAIL"
-        diag = f"Large TI integration uncertainty (Delta G = {total_dg:.2f} \u00b1 {total_error:.2f} {unit} > 0.80). Insufficient sampling."
+        diag = f"Large TI integration uncertainty (Delta G = {total_dg:.2f} \u00b1 {total_error:.2f} {unit} > {0.80 * to_unit:.2f}). Insufficient sampling."
 
     return FreeEnergyResult(
         method="Thermodynamic Integration (TI)",
@@ -216,15 +217,16 @@ def calculate_bar_free_energy(
     total_dg = float(cumulative_dg[-1])
     total_error = float(np.sqrt(np.sum(np.array(pair_errors)**2)))
 
-    if total_error <= 0.25:
+    to_unit = 4.184 if unit.lower() == "kj/mol" else 1.0  # thresholds are defined in kcal/mol
+    if total_error <= 0.25 * to_unit:
         status = "PASS"
         diag = f"BAR free energy calculation converged (Delta G = {total_dg:.2f} \u00b1 {total_error:.2f} {unit})."
-    elif total_error <= 0.60:
+    elif total_error <= 0.60 * to_unit:
         status = "WARNING"
         diag = f"BAR free energy calculation has moderate uncertainty (Delta G = {total_dg:.2f} \u00b1 {total_error:.2f} {unit})."
     else:
         status = "FAIL"
-        diag = f"High BAR estimation error (Delta G = {total_dg:.2f} \u00b1 {total_error:.2f} {unit} > 0.60)."
+        diag = f"High BAR estimation error (Delta G = {total_dg:.2f} \u00b1 {total_error:.2f} {unit} > {0.60 * to_unit:.2f})."
 
     return FreeEnergyResult(
         method="Bennett Acceptance Ratio (BAR)",
@@ -238,3 +240,61 @@ def calculate_bar_free_energy(
         status=status,
         diagnostic_message=diag
     )
+
+
+def calculate_ti_free_energy_multi(
+    lambda_matrix: List[List[float]],
+    gradients_by_component: List[Dict[str, np.ndarray]],
+    components: List[str],
+    unit: str = "kcal/mol"
+) -> FreeEnergyResult:
+    """
+    TI along a path in which several lambda components change (for example bonded restraints, then
+    Coulomb, then van der Waals in one set of GROMACS windows).
+
+    Delta G = sum over components c of the trapezoidal integral of <dH/dlambda_c> over lambda_c,
+    with the windows in path order (increasing sum of the lambda components); this is what
+    alchemlyb's TI estimator computes. Each component's standard error is corrected for
+    autocorrelation, and the variances are added.
+
+    Parameters
+    ----------
+    lambda_matrix : list of list of float
+        One row per window, one column per component, in the order of `components`.
+    gradients_by_component : list of dict
+        One dict per window mapping each component to its dH/dlambda_c time series.
+    components : list of str
+    unit : str
+    """
+    lam = np.asarray(lambda_matrix, dtype=float)
+    order = np.argsort(lam.sum(axis=1), kind="stable")
+    lam = lam[order]
+    grads = [gradients_by_component[i] for i in order]
+    total, var = 0.0, 0.0
+    cumulative = np.zeros(len(lam))
+    for j, c in enumerate(components):
+        means, errs = [], []
+        for w in grads:
+            g = np.asarray(w[c], dtype=float)
+            g = g[np.isfinite(g)]
+            means.append(float(np.mean(g)) if len(g) else 0.0)
+            errs.append(float(np.std(g, ddof=1) * np.sqrt(statistical_inefficiency(g) / len(g))) if len(g) > 1 else 0.0)
+        means, errs = np.asarray(means), np.asarray(errs)
+        dl = np.diff(lam[:, j])
+        steps = (means[:-1] + means[1:]) / 2.0 * dl
+        cumulative[1:] += np.cumsum(steps)
+        total += float(np.sum(steps))
+        wts = np.zeros(len(lam))
+        wts[:-1] += dl / 2.0
+        wts[1:] += dl / 2.0
+        var += float(np.sum((wts * errs) ** 2))
+    err = float(np.sqrt(var))
+    to_unit = 4.184 if unit.lower() == "kj/mol" else 1.0
+    status = "PASS" if err <= 0.30 * to_unit else ("WARNING" if err <= 0.80 * to_unit else "FAIL")
+    return FreeEnergyResult(
+        method="Thermodynamic Integration (TI, multi-component)",
+        delta_g=total, delta_g_error=err, unit=unit,
+        lambda_values=[float(x) for x in lam.sum(axis=1)], cumulative_delta_g=cumulative.tolist(),
+        mean_gradients=None, gradient_errors=None, status=status,
+        diagnostic_message=f"TI over {len(components)} lambda components ({', '.join(components)}): "
+                           f"Delta G = {total:.2f} \u00b1 {err:.2f} {unit}.")

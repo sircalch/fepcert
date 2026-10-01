@@ -72,24 +72,38 @@ def generate_fepcert_manuscript_assets(
     ov_str = ""
     if report.overlap_result:
         ov = report.overlap_result
-        ov_str = f"Phase space connectivity was certified with a minimum adjacent lambda-state overlap of Pi = {ov.min_adjacent_overlap*100:.1f}%, exceeding the recommended Klimovich threshold. "
+        if ov.status == "NOT_APPLICABLE":
+            ov_str = "Phase-space overlap between neighbouring states could not be assessed because no energy differences between states were available. "
+        else:
+            qual = {"PASS": "adequate", "WARNING": "marginal", "FAIL": "insufficient"}.get(ov.status, "")
+            ov_str = (f"The smallest two-state MBAR overlap between neighbouring lambda states was {ov.min_adjacent_overlap:.3f} "
+                      f"({qual}; threshold 0.03 after Klimovich et al.). ")
 
     cr_str = ""
     if report.convergence_result:
         cr = report.convergence_result
-        cr_str = f"Time-series convergence was verified by forward-reverse chunking analysis yielding a hysteresis of {cr.final_hysteresis:.2f} kcal/mol (W_diss = {cr.dissipated_work:.2f} kcal/mol). "
+        cr_str = (f"The TI estimates from the first and second halves of the data differed by {cr.final_hysteresis:.2f} {fe.unit} "
+                  f"({cr.status}). ")
 
     cy_str = ""
     if report.cycle_result:
         cy = report.cycle_result
-        cy_str = f"Thermodynamic cycle closure consistency was confirmed across {cy.n_cycles} independent cycles with an RMSE of {cy.cycle_rmse:.2f} kcal/mol. "
+        z = (f"; {cy.frac_cycles_z_above_2:.0%} of the cycles exceeded 1.96 times their combined edge uncertainty"
+             if getattr(cy, "frac_cycles_z_above_2", float("nan")) == getattr(cy, "frac_cycles_z_above_2", None) else "")
+        cy_str = (f"Across {cy.n_cycles} thermodynamic cycles of the perturbation network the closure RMSE was "
+                  f"{cy.cycle_rmse:.2f} kcal/mol and the largest closure error {cy.max_cycle_error:.2f} kcal/mol{z} ({cy.status}). ")
+
+    bar_str = ""
+    if "bar_delta_g" in report.metadata:
+        bar_str = (f"BAR on the same windows gave {report.metadata['bar_delta_g']:.2f} \u00b1 "
+                   f"{report.metadata['bar_delta_g_error']:.2f} {fe.unit}. ")
 
     full_methods = (
         f"Alchemical free energy calculations for {trans_str} were performed in {engine_str}. "
-        f"Free energy estimates and convergence quality were systematically audited using FEPCert v1.1.0 (Monreal-Hernández, 2026). "
-        f"The net free energy difference was calculated using {fe.method} as Delta G = {fe.delta_g:.2f} \u00b1 {fe.delta_g_error:.2f} {fe.unit}. "
-        f"{ov_str}{cr_str}{cy_str}"
-        f"The calculation achieved an overall certification status of: {report.overall_status}."
+        f"Free energy estimates and their quality were analysed with FEPCert v{__import__('fepcert').__version__} (Monreal-Hernández, 2026). "
+        f"The free energy difference was calculated by {fe.method} as Delta G = {fe.delta_g:.2f} \u00b1 {fe.delta_g_error:.2f} {fe.unit}. "
+        f"{bar_str}{ov_str}{cr_str}{cy_str}"
+        f"Overall FEPCert status: {report.overall_status}."
     )
 
     with open(methods_path, "w", encoding="utf-8") as f:
@@ -102,7 +116,7 @@ def generate_fepcert_manuscript_assets(
   author = {Monreal-Hern\\'andez, Andre},
   title = {{FEPCert: An Open-Source Toolkit for Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification of Alchemical Free Energy Simulations}},
   year = {2026},
-  version = {1.1.0},
+  version = {1.2.0},
   publisher = {Zenodo},
   url = {https://github.com/sircalch/fepcert}
 }

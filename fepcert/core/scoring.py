@@ -7,7 +7,8 @@ from dataclasses import dataclass, asdict
 import numpy as np
 
 from fepcert.core.overlap import OverlapAnalysisResult, calculate_overlap_matrix
-from fepcert.core.ti_bar import FreeEnergyResult, calculate_ti_free_energy, calculate_bar_free_energy
+from fepcert.core.ti_bar import (FreeEnergyResult, calculate_ti_free_energy, calculate_bar_free_energy,
+                                calculate_ti_free_energy_multi)
 from fepcert.core.convergence import ConvergenceAnalysisResult, evaluate_time_convergence
 from fepcert.core.cycles import CycleClosureResult, evaluate_cycle_closure
 
@@ -36,7 +37,8 @@ def assess_fep_quality(
     reverse_work_list: Optional[List[np.ndarray]] = None,
     network_edges: Optional[List[Dict[str, Any]]] = None,
     temperature_k: float = 298.15,
-    unit: str = "kcal/mol"
+    unit: str = "kcal/mol",
+    multi_component: Optional[Dict[str, Any]] = None
 ) -> FEPValidationReport:
     """
     Evaluates alchemical free energy simulation convergence, lambda overlap, and cycle closure.
@@ -57,6 +59,11 @@ def assess_fep_quality(
         Edges in chemical perturbation network for cycle analysis.
     temperature_k : float, default 298.15
     unit : str, default 'kcal/mol'
+    multi_component : dict, optional
+        {'lambda_matrix', 'gradients_by_component', 'components'} for TI along a path in which
+        several lambda components change (as returned by parse_gromacs_dhdl_directory).
+        When both dH/dlambda and work values are given, TI is the reported estimate and the BAR
+        estimate is added to the metadata as a cross-check.
 
     Returns
     -------
@@ -66,31 +73,44 @@ def assess_fep_quality(
     statuses = []
     recommendations = []
 
-    # 1. Free Energy Calculation (TI or BAR)
-    if gradients_list is not None and len(gradients_list) > 0:
+    # 1. Free Energy Calculation (TI, multi-component TI or BAR)
+    if multi_component is not None:
+        fe_res = calculate_ti_free_energy_multi(multi_component["lambda_matrix"], multi_component["gradients_by_component"],
+                                                multi_component["components"], unit=unit)
+    elif gradients_list is not None and len(gradients_list) > 0:
         fe_res = calculate_ti_free_energy(lambda_values, gradients_list, unit=unit)
     elif forward_work_list is not None and reverse_work_list is not None:
         fe_res = calculate_bar_free_energy(lambda_values, forward_work_list, reverse_work_list, temperature_k=temperature_k, unit=unit)
     else:
         raise ValueError("Must provide either gradients_list for TI or forward/reverse work lists for BAR.")
+    if fe_res.method.startswith("Thermodynamic") and forward_work_list is not None and reverse_work_list is not None:
+        bar_res = calculate_bar_free_energy(list(range(len(forward_work_list) + 1)), forward_work_list, reverse_work_list,
+                                            temperature_k=temperature_k, unit=unit)
+        metadata = dict(metadata, bar_delta_g=bar_res.delta_g, bar_delta_g_error=bar_res.delta_g_error,
+                        ti_minus_bar=fe_res.delta_g - bar_res.delta_g)
 
     statuses.append(fe_res.status)
     if fe_res.status != "PASS":
         recommendations.append(fe_res.diagnostic_message)
 
-    # 2. Phase Space Overlap Analysis
+    # 2. Phase-space overlap between neighbouring states: needs energy differences (work values);
+    #    with dH/dlambda only it is reported as not applicable and does not enter the verdict.
     overlap_res = None
-    samples_for_overlap = gradients_list if gradients_list is not None else forward_work_list
-    if samples_for_overlap is not None and len(samples_for_overlap) >= 2:
-        overlap_res = calculate_overlap_matrix(samples_for_overlap)
-        statuses.append(overlap_res.status)
+    if forward_work_list is not None and reverse_work_list is not None and len(forward_work_list) >= 1:
+        overlap_res = calculate_overlap_matrix(forward_work_list=forward_work_list, reverse_work_list=reverse_work_list,
+                                               temperature_k=temperature_k, unit=unit)
+    elif gradients_list is not None and len(gradients_list) >= 2:
+        overlap_res = calculate_overlap_matrix(gradients_list)
+    if overlap_res is not None:
+        if overlap_res.status != "NOT_APPLICABLE":
+            statuses.append(overlap_res.status)
         if overlap_res.status != "PASS":
             recommendations.append(overlap_res.diagnostic_message)
 
     # 3. Time-Series Convergence Analysis
     conv_res = None
     if gradients_list is not None and len(gradients_list) > 0 and len(gradients_list[0]) >= 20:
-        conv_res = evaluate_time_convergence(lambda_values, gradients_list)
+        conv_res = evaluate_time_convergence(lambda_values, gradients_list, unit=unit)
         statuses.append(conv_res.status)
         if conv_res.status != "PASS":
             recommendations.append(conv_res.diagnostic_message)
@@ -106,13 +126,13 @@ def assess_fep_quality(
     # Overall Decision
     if "FAIL" in statuses:
         overall_status = "FAIL"
-        validation_score = "ALCHEMICAL FREE ENERGY = UNCONVERGED / HIGH ERROR (REJECTED)"
+        validation_score = "FREE-ENERGY CHECKS = AT LEAST ONE FAILED"
     elif "WARNING" in statuses:
         overall_status = "WARNING"
-        validation_score = "ALCHEMICAL FREE ENERGY = ACCEPTABLE WITH WARNINGS"
+        validation_score = "FREE-ENERGY CHECKS = PASSED WITH WARNINGS"
     else:
         overall_status = "PASS"
-        validation_score = "ALCHEMICAL FREE ENERGY = FULLY CERTIFIED (HIGH CONFIDENCE)"
+        validation_score = "FREE-ENERGY CHECKS = ALL PASSED"
 
     return FEPValidationReport(
         overall_status=overall_status,
@@ -125,7 +145,7 @@ def assess_fep_quality(
         recommendations=recommendations,
         provenance={
             "tool": "FEPCert",
-            "version": "1.1.0",
+            "version": __import__("fepcert").__version__,
             "citation": "Monreal-Hernández, A. (2026). FEPCert: An Open-Source Toolkit for Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification of Alchemical Free Energy Simulations."
         }
     )

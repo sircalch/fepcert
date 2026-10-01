@@ -123,3 +123,34 @@ def test_ti_standard_error_is_corrected_for_autocorrelation():
     r = calculate_ti_free_energy([0.0, 1.0], [x, x], unit="kJ/mol")
     naive = x.std(ddof=1) / np.sqrt(n)
     assert r.gradient_errors[0] == pytest.approx(naive * np.sqrt(19.0), rel=0.1)
+
+
+def _write_multi_window(path, state, grads, dh):
+    """Minimal two-component GROMACS dhdl file with dH/dlambda and Delta H columns."""
+    names = "(coul-lambda, vdw-lambda)"
+    lines = [f'@ subtitle "T = 300 (K) \\xl\\f{{}} state 0: {names} = ({state[0]:.4f}, {state[1]:.4f})"',
+             '@ s0 legend "dH/d\\xl\\f{} coul-lambda = %.4f"' % state[0],
+             '@ s1 legend "dH/d\\xl\\f{} vdw-lambda = %.4f"' % state[1]]
+    targets = sorted(dh)
+    for k, t in enumerate(targets):
+        lines.append('@ s%d legend "\\xD\\f{}H \\xl\\f{} to (%.4f, %.4f)"' % (k + 2, t[0], t[1]))
+    for i in range(len(grads[0])):
+        row = [float(i), grads[0][i], grads[1][i]] + [dh[t][i] for t in targets]
+        lines.append(" ".join(f"{v:.6f}" for v in row))
+    path.write_text("\n".join(lines) + "\n")
+
+
+def test_multi_component_ti_and_neighbour_work(tmp_path):
+    from fepcert.core.ti_bar import calculate_ti_free_energy_multi
+    states = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0)]
+    # constant gradients: dH/dcoul = 2 while coul changes, dH/dvdw = -3 while vdw changes
+    for k, st in enumerate(states):
+        dh = {t: np.full(30, 0.1 * (j - k)) for j, t in enumerate(states)}
+        _write_multi_window(tmp_path / f"dhdl.{k}.xvg", st, [np.full(30, 2.0), np.full(30, -3.0)], dh)
+    d = parse_gromacs_dhdl_directory(str(tmp_path), "dhdl*.xvg")
+    assert d["component"] == "multi" and d["components"] == ["coul", "vdw"]
+    assert d["lambda_matrix"] == [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0]]
+    res = calculate_ti_free_energy_multi(d["lambda_matrix"], d["gradients_by_component"], d["components"])
+    assert res.delta_g == pytest.approx(2.0 - 3.0)
+    assert d["forward_work_list"] is not None and len(d["forward_work_list"]) == 2
+    assert np.allclose(d["forward_work_list"][0], 0.1) and np.allclose(d["reverse_work_list"][0], -0.1)

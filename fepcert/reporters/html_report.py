@@ -254,7 +254,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         </div>
 
         <footer>
-            Generated automatically by <strong>FEPCert v1.1.0</strong> &bull; Alchemical Free Energy Quality-Control Toolkit &bull; Monreal-Hernández, 2026.
+            Generated automatically by <strong>FEPCert v{{ version }}</strong> &bull; Alchemical free-energy quality checks &bull; Monreal-Hernández, 2026.
         </footer>
     </div>
 
@@ -286,7 +286,8 @@ def generate_fepcert_html_report(
     rendered = template.render(
         report=report,
         methods_text=methods_text,
-        citation_bib=citation_bib
+        citation_bib=citation_bib,
+        version=__import__("fepcert").__version__
     )
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(rendered)

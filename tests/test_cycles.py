@@ -28,3 +28,13 @@ def test_cycle_closure_inconsistent():
     res = evaluate_cycle_closure(edges)
     assert res.status == "FAIL"
     assert res.cycle_rmse > 1.5
+
+
+def test_distinct_four_cycles_on_the_same_nodes_are_counted():
+    # complete graph K4: four triangles and three distinct 4-cycles on the same four nodes
+    names = ["A", "B", "C", "D"]
+    edges = [{"ligand_a": a, "ligand_b": b, "delta_g": 0.1 * (i + 1), "error": 0.1}
+             for i, (a, b) in enumerate([(x, y) for k, x in enumerate(names) for y in names[k + 1:]])]
+    res = evaluate_cycle_closure(edges)
+    assert res.n_cycles == 7
+    assert all(np.isfinite(c.z_score) for c in res.cycles)

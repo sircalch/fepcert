@@ -31,6 +31,7 @@ _MULTI_STATE_RE = re.compile(r"\(([^)]*-lambda[^)]*)\)\s*=\s*\(([^)]*)\)")
 _LEGEND_RE = re.compile(r"^@\s*s(\d+)\s+legend\s+\"(.*)\"")
 _DHDL_LEGEND_RE = re.compile(r"dH/d.*?([A-Za-z]+)-lambda(?:\s*=?\s*(" + _NUM + r"))?")
 _UNIT_RE = re.compile(r"\((kJ/mol|kcal/mol)")
+_DH_LEGEND_RE = re.compile(r"H\s*\\xl\\f\{\}\s*to\s*(.+?)\s*$")
 
 
 def _open_text(filepath: str):
@@ -66,6 +67,8 @@ def parse_gromacs_dhdl(filepath: str) -> Dict[str, Any]:
     unit = None
     state_lambdas: Dict[str, float] = {}
     dhdl_columns: List[Tuple[int, str, Optional[float]]] = []
+    dh_columns: List[Tuple[int, Tuple[float, ...]]] = []
+    state_names: List[str] = []
     rows: List[List[float]] = []
 
     with _open_text(filepath) as fh:
@@ -83,10 +86,12 @@ def parse_gromacs_dhdl(filepath: str) -> Dict[str, Any]:
                         names = [n.strip().replace("-lambda", "") for n in mm.group(1).split(",")]
                         vals = [float(v) for v in mm.group(2).split(",")]
                         state_lambdas.update(dict(zip(names, vals)))
+                        state_names = names
                     else:
                         ms = _SINGLE_STATE_RE.search(s)
                         if ms:
                             state_lambdas[ms.group(1).lower()] = float(ms.group(2))
+                            state_names = [ms.group(1).lower()]
                 elif "yaxis" in s and "label" in s:
                     mu = _UNIT_RE.search(s)
                     if mu:
@@ -95,6 +100,11 @@ def parse_gromacs_dhdl(filepath: str) -> Dict[str, Any]:
                     ml = _LEGEND_RE.match(s)
                     if ml:
                         legend = ml.group(2)
+                        mh = _DH_LEGEND_RE.search(legend)
+                        if mh and "dH/d" not in legend:
+                            target = tuple(float(v) for v in mh.group(1).strip("() ").split(","))
+                            dh_columns.append((int(ml.group(1)) + 1, target))
+                            continue
                         md = _DHDL_LEGEND_RE.search(legend)
                         if md:
                             comp = md.group(1).lower()
@@ -123,9 +133,16 @@ def parse_gromacs_dhdl(filepath: str) -> Dict[str, Any]:
         lam_value = state_lambdas.get(comp, lam)
         components[comp] = {"lambda": lam_value, "gradients": data[:, col].copy()}
 
+    # Delta H = H(target state) - H(this state) for every target state written by GROMACS,
+    # keyed by the target lambda vector in the order of `state_names` (rounded as printed).
+    delta_h = {tuple(round(x, 4) for x in tgt): data[:, col].copy() for col, tgt in dh_columns if col < width}
     out: Dict[str, Any] = {
         "time": data[:, 0].copy(),
         "components": components,
+        "state_names": state_names,
+        "state": tuple(round(state_lambdas[n], 4) for n in state_names) if state_names and
+                 all(n in state_lambdas for n in state_names) else None,
+        "delta_h": delta_h,
         "temperature_k": temperature,
         "unit": unit or "kJ/mol",
         "n_frames": int(data.shape[0]),
@@ -138,6 +155,22 @@ def parse_gromacs_dhdl(filepath: str) -> Dict[str, Any]:
         out["lambda"] = None
         out["gradients"] = None
     return out
+
+
+def neighbour_work(parsed_in_path_order: List[Dict[str, Any]]):
+    """
+    Forward and reverse work between neighbouring windows from the Delta H columns:
+    forward[k] = H_{k+1} - H_k on samples of window k, reverse[k] = H_k - H_{k+1} on samples of
+    window k+1 (energy units of the file). Returns (None, None) if any is missing.
+    """
+    fw, rw = [], []
+    for a, b in zip(parsed_in_path_order, parsed_in_path_order[1:]):
+        sa, sb = a.get("state"), b.get("state")
+        if sa is None or sb is None or sb not in a.get("delta_h", {}) or sa not in b.get("delta_h", {}):
+            return None, None
+        fw.append(a["delta_h"][sb])
+        rw.append(b["delta_h"][sa])
+    return fw, rw
 
 
 def parse_gromacs_dhdl_directory(dirpath: str, file_pattern: str = "dhdl*.xvg*",
@@ -159,14 +192,16 @@ def parse_gromacs_dhdl_directory(dirpath: str, file_pattern: str = "dhdl*.xvg*",
     -------
     data : dict
         'lambda_values', 'gradients_list', 'n_windows', 'component', 'unit', 'temperature_k',
-        'files'.
+        'files', and 'forward_work_list' / 'reverse_work_list' (neighbour work from the Delta H
+        columns, None when the files do not contain them).
 
     Raises
     ------
     ValueError
-        If a window's lambda value cannot be read from its header, if lambda values repeat,
-        or if more than one lambda component changes across the windows (analyse each leg,
-        e.g. Coulomb and van der Waals, separately).
+        If a window's lambda value cannot be read from its header or if lambda values repeat.
+        When more than one lambda component changes across the windows, 'component' is 'multi'
+        and 'components', 'lambda_matrix' and 'gradients_by_component' replace 'lambda_values'
+        and 'gradients_list' (use calculate_ti_free_energy_multi).
     """
     pattern = os.path.join(dirpath, "**", file_pattern) if recursive else os.path.join(dirpath, file_pattern)
     files = sorted(glob.glob(pattern, recursive=recursive))
@@ -188,9 +223,25 @@ def parse_gromacs_dhdl_directory(dirpath: str, file_pattern: str = "dhdl*.xvg*",
     varying = sorted(c for c in comp_names
                      if len({round(p["components"][c]["lambda"], 10) for _, p in parsed}) > 1)
     if len(varying) > 1:
-        raise ValueError(
-            f"Lambda components {varying} change across these windows. Analyse each leg "
-            f"(e.g. Coulomb and van der Waals) in a separate directory.")
+        # Several components change along the path: return them all for multi-component TI
+        # (fepcert.core.ti_bar.calculate_ti_free_energy_multi). Windows in path order.
+        rows = sorted(parsed, key=lambda fp: sum(fp[1]["components"][c]["lambda"] for c in varying))
+        units = {p["unit"] for _, p in rows}
+        temps = {p["temperature_k"] for _, p in rows if p["temperature_k"] is not None}
+        return {
+            "lambda_values": None,
+            "gradients_list": None,
+            "n_windows": len(rows),
+            "component": "multi",
+            "components": varying,
+            "lambda_matrix": [[p["components"][c]["lambda"] for c in varying] for _, p in rows],
+            "gradients_by_component": [{c: p["components"][c]["gradients"] for c in varying} for _, p in rows],
+            "forward_work_list": neighbour_work([p for _, p in rows])[0],
+            "reverse_work_list": neighbour_work([p for _, p in rows])[1],
+            "unit": units.pop() if len(units) == 1 else "kJ/mol",
+            "temperature_k": temps.pop() if len(temps) == 1 else None,
+            "files": [f for f, _ in rows],
+        }
     comp = varying[0] if varying else sorted(comp_names)[0]
 
     items = sorted(((p["components"][comp]["lambda"], p["components"][comp]["gradients"], f, p)
@@ -209,4 +260,6 @@ def parse_gromacs_dhdl_directory(dirpath: str, file_pattern: str = "dhdl*.xvg*",
         "unit": units.pop() if len(units) == 1 else "kJ/mol",
         "temperature_k": temps.pop() if len(temps) == 1 else None,
         "files": [it[2] for it in items],
+        "forward_work_list": neighbour_work([it[3] for it in items])[0],
+        "reverse_work_list": neighbour_work([it[3] for it in items])[1],
     }
