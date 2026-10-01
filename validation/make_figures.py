@@ -131,8 +131,8 @@ def tables(d, c, z, s):
     with open(os.path.join(TAB, "table_agreement.tex"), "w") as fh:
         fh.write("\n".join(lines) + "\n")
 
-    lines = [r"\begin{tabular}{lllrrrrll}", r"\toprule",
-             r"System & leg & variant & windows & TI & BAR & min.\ overlap (MBAR) & overlap 1.1.0 / 1.2 & convergence 1.1.0 / 1.2 \\",
+    lines = [r"\begin{tabular}{lllrrrrlll}", r"\toprule",
+             r"System & leg & variant & windows & TI & BAR & min.\ overlap (MBAR) & overlap 1.1.0 / 1.2 & convergence 1.1.0 / 1.2 & TI--BAR (1.2) \\",
              r"\midrule"]
     for r in d.itertuples():
         o_old = r.ov_v110_status if isinstance(r.ov_v110_status, str) else "n/a"
