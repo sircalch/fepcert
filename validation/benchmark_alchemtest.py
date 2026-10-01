@@ -33,7 +33,8 @@ import pandas as pd
 warnings.filterwarnings("ignore")
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))
-from fepcert.core.ti_bar import calculate_ti_free_energy, calculate_bar_free_energy, calculate_ti_free_energy_multi  # noqa: E402
+from fepcert.core.ti_bar import (calculate_ti_free_energy, calculate_bar_free_energy, calculate_ti_free_energy_multi,  # noqa: E402
+                                check_estimator_agreement)
 from fepcert.core.overlap import calculate_overlap_matrix  # noqa: E402
 from fepcert.core.convergence import evaluate_time_convergence  # noqa: E402
 from fepcert.parsers.gromacs_dhdl import parse_gromacs_dhdl  # noqa: E402
@@ -131,6 +132,8 @@ def one_variant(name, leg, variant, files, T):
     row.update(bar_fepcert=bar.delta_g, bar_fepcert_se=bar.delta_g_error,
                bar_alchemlyb=float(bar_al.delta_f_.iloc[0, -1] * kT),
                bar_alchemlyb_se=float(np.sqrt(np.sum(np.diag(bar_al.d_delta_f_.to_numpy(), 1) ** 2)) * kT))
+    agree = check_estimator_agreement(ti, bar)
+    row.update(tibar_status=agree["status"], tibar_z=agree["z"])
 
     # --- overlap
     ov = calculate_overlap_matrix(forward_work_list=wf, reverse_work_list=wr, temperature_k=T, unit="kJ/mol")

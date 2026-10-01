@@ -96,7 +96,8 @@ def generate_fepcert_manuscript_assets(
     bar_str = ""
     if "bar_delta_g" in report.metadata:
         bar_str = (f"BAR on the same windows gave {report.metadata['bar_delta_g']:.2f} \u00b1 "
-                   f"{report.metadata['bar_delta_g_error']:.2f} {fe.unit}. ")
+                   f"{report.metadata['bar_delta_g_error']:.2f} {fe.unit} (TI - BAR = {report.metadata['ti_minus_bar']:.2f} {fe.unit}, "
+                   f"{report.metadata['ti_bar_z']:.1f} combined standard errors; {report.metadata['ti_bar_status']}). ")
 
     full_methods = (
         f"Alchemical free energy calculations for {trans_str} were performed in {engine_str}. "

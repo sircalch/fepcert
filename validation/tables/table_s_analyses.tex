@@ -1,0 +1,34 @@
+\begin{tabular}{lllrrrrll}
+\toprule
+System & leg & variant & windows & TI & BAR & min.\ overlap (MBAR) & overlap 1.1.0 / 1.2 & convergence 1.1.0 / 1.2 \\
+\midrule
+benzene & Coulomb & all windows & 5 & 7.71 & 7.59 & 0.211 & PASS / PASS & PASS / PASS & PASS \\
+benzene & Coulomb & first 5\% of samples & 5 & 7.62 & 7.47 & 0.212 & PASS / PASS & PASS / PASS & PASS \\
+benzene & Coulomb & every 2nd window & 3 & 8.03 & 7.59 & 0.242 & PASS / PASS & PASS / PASS & PASS \\
+benzene & Coulomb & every 4th window & 2 & 9.45 & 7.58 & 0.107 & PASS / PASS & PASS / PASS & WARNING \\
+benzene & VDW & all windows & 16 & -7.62 & -7.57 & 0.147 & PASS / PASS & PASS / PASS & PASS \\
+benzene & VDW & first 5\% of samples & 16 & -7.96 & -8.07 & 0.147 & PASS / PASS & FAIL / PASS & PASS \\
+benzene & VDW & every 2nd window & 9 & -8.06 & -7.85 & 0.185 & PASS / PASS & PASS / PASS & PASS \\
+benzene & VDW & every 4th window & 5 & -8.04 & -7.53 & 0.030 & WARNING / WARNING & PASS / PASS & PASS \\
+ethanol & Coulomb & all windows & 14 & 26.44 & 26.35 & 0.124 & PASS / PASS & PASS / PASS & PASS \\
+ethanol & Coulomb & first 5\% of samples & 14 & 26.32 & 26.23 & 0.124 & PASS / PASS & WARNING / PASS & PASS \\
+ethanol & Coulomb & every 2nd window & 8 & 26.70 & 26.37 & 0.184 & PASS / PASS & PASS / PASS & PASS \\
+ethanol & Coulomb & every 4th window & 5 & 27.66 & 26.40 & 0.112 & PASS / PASS & PASS / PASS & WARNING \\
+ethanol & VDW & all windows & 13 & -8.41 & -8.54 & 0.164 & PASS / PASS & PASS / PASS & PASS \\
+ethanol & VDW & first 5\% of samples & 13 & -7.61 & -7.66 & 0.161 & PASS / PASS & WARNING / PASS & PASS \\
+ethanol & VDW & every 2nd window & 7 & -8.03 & -8.59 & 0.067 & PASS / WARNING & PASS / PASS & PASS \\
+ethanol & VDW & every 4th window & 4 & -10.49 & -8.15 & 0.006 & PASS / FAIL & PASS / PASS & WARNING \\
+ABFE & ligand & all windows & 20 & 32.54 & 32.10 & 0.157 & n/a / PASS & n/a / n/a & PASS \\
+ABFE & ligand & first 5\% of samples & 20 & 31.92 & 31.54 & 0.158 & n/a / PASS & n/a / n/a & PASS \\
+ABFE & ligand & every 2nd window & 11 & 33.90 & 32.25 & 0.083 & n/a / PASS & n/a / n/a & PASS \\
+ABFE & ligand & every 4th window & 6 & 39.02 & 32.41 & 0.002 & n/a / FAIL & n/a / n/a & FAIL \\
+ABFE & complex & all windows & 30 & 90.02 & 89.93 & 0.082 & n/a / PASS & n/a / n/a & PASS \\
+ABFE & complex & first 5\% of samples & 30 & 87.44 & 87.34 & 0.080 & n/a / PASS & n/a / n/a & PASS \\
+ABFE & complex & every 2nd window & 16 & 90.14 & 90.07 & 0.112 & n/a / PASS & n/a / n/a & PASS \\
+ABFE & complex & every 4th window & 9 & 90.60 & 90.20 & 0.012 & n/a / FAIL & n/a / n/a & PASS \\
+water particle & AllStates & all windows & 38 & -29.17 & -29.12 & 0.073 & n/a / PASS & n/a / n/a & PASS \\
+water particle & AllStates & first 5\% of samples & 38 & -29.91 & -29.82 & 0.069 & n/a / PASS & n/a / n/a & PASS \\
+water particle & AllStates & every 2nd window & 20 & -29.54 & -29.34 & 0.139 & n/a / PASS & n/a / n/a & PASS \\
+water particle & AllStates & every 4th window & 11 & -29.72 & -29.14 & 0.185 & n/a / PASS & n/a / n/a & PASS \\
+\bottomrule
+\end{tabular}

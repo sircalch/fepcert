@@ -8,7 +8,7 @@ import numpy as np
 
 from fepcert.core.overlap import OverlapAnalysisResult, calculate_overlap_matrix
 from fepcert.core.ti_bar import (FreeEnergyResult, calculate_ti_free_energy, calculate_bar_free_energy,
-                                calculate_ti_free_energy_multi)
+                                calculate_ti_free_energy_multi, check_estimator_agreement)
 from fepcert.core.convergence import ConvergenceAnalysisResult, evaluate_time_convergence
 from fepcert.core.cycles import CycleClosureResult, evaluate_cycle_closure
 
@@ -86,8 +86,12 @@ def assess_fep_quality(
     if fe_res.method.startswith("Thermodynamic") and forward_work_list is not None and reverse_work_list is not None:
         bar_res = calculate_bar_free_energy(list(range(len(forward_work_list) + 1)), forward_work_list, reverse_work_list,
                                             temperature_k=temperature_k, unit=unit)
+        agree = check_estimator_agreement(fe_res, bar_res)
         metadata = dict(metadata, bar_delta_g=bar_res.delta_g, bar_delta_g_error=bar_res.delta_g_error,
-                        ti_minus_bar=fe_res.delta_g - bar_res.delta_g)
+                        ti_minus_bar=agree["ti_minus_bar"], ti_bar_z=agree["z"], ti_bar_status=agree["status"])
+        statuses.append(agree["status"])
+        if agree["status"] != "PASS":
+            recommendations.append(agree["diagnostic_message"])
 
     statuses.append(fe_res.status)
     if fe_res.status != "PASS":

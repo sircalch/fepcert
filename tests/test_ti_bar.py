@@ -28,3 +28,13 @@ def test_bar_free_energy():
     res = calculate_bar_free_energy(lambdas, w_fwd, w_rev, temperature_k=298.15)
     assert res.status == "PASS"
     assert np.isclose(res.delta_g, 5.0, atol=0.5)
+
+
+def test_ti_bar_agreement_flags_quadrature_error():
+    from fepcert.core.ti_bar import FreeEnergyResult, check_estimator_agreement
+
+    def res(dg, err):
+        return FreeEnergyResult("x", dg, err, "kJ/mol", [], [], None, None, "PASS", "")
+    assert check_estimator_agreement(res(-8.41, 0.15), res(-8.54, 0.10))["status"] == "PASS"
+    assert check_estimator_agreement(res(9.45, 0.09), res(7.58, 0.11))["status"] == "WARNING"
+    assert check_estimator_agreement(res(39.0, 0.6), res(32.4, 1.6))["status"] == "FAIL"

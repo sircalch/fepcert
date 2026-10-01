@@ -1,0 +1,6 @@
+cycles with finite z: 1399
+median |z|: 1.653
+fraction |z|>1.96: 0.430
+fraction |z|>3: 0.244
+scale (median/half-normal median): 2.451
+scale (95th percentile/1.96): 2.567

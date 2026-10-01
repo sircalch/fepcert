@@ -34,6 +34,10 @@ with the references to rounding error.
 - **Neighbour work from GROMACS files**: the parser reads the Delta H columns and returns
   `forward_work_list` / `reverse_work_list`, so BAR and the overlap are computed from dhdl.xvg
   directly; the CLI reports BAR next to TI.
+- **TI/BAR agreement check** (`check_estimator_agreement`): trapezoidal TI carries a quadrature
+  error when the windows are too sparse, which neither its error bar nor the overlap shows; a
+  difference from BAR on the same windows above three combined standard errors and 0.25 (1.0)
+  kcal/mol gives WARNING (FAIL).
 - **Cycle closure against the edge uncertainties**: `expected_sigma` and `z_score` per cycle and
   `frac_cycles_z_above_2` per network.
 

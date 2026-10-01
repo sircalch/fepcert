@@ -298,3 +298,27 @@ def calculate_ti_free_energy_multi(
         mean_gradients=None, gradient_errors=None, status=status,
         diagnostic_message=f"TI over {len(components)} lambda components ({', '.join(components)}): "
                            f"Delta G = {total:.2f} \u00b1 {err:.2f} {unit}.")
+
+
+def check_estimator_agreement(ti: FreeEnergyResult, bar: FreeEnergyResult, z_max: float = 3.0,
+                              warn_kcal: float = 0.25, fail_kcal: float = 1.0) -> Dict[str, Any]:
+    """
+    Compares TI and BAR on the same windows. Trapezoidal TI carries a quadrature error when the
+    windows are too sparse where <dH/dlambda> is curved, which neither its statistical error nor
+    the overlap reveals; BAR does not have this error. A difference larger than z_max combined
+    standard errors and than warn_kcal (fail_kcal) kcal/mol gives WARNING (FAIL).
+    """
+    to_unit = 4.184 if ti.unit.lower() == "kj/mol" else 1.0
+    diff = ti.delta_g - bar.delta_g
+    sigma = float(np.sqrt(ti.delta_g_error ** 2 + bar.delta_g_error ** 2))
+    z = abs(diff) / sigma if sigma > 0 else float("inf")
+    if z > z_max and abs(diff) > fail_kcal * to_unit:
+        status = "FAIL"
+    elif z > z_max and abs(diff) > warn_kcal * to_unit:
+        status = "WARNING"
+    else:
+        status = "PASS"
+    msg = (f"TI - BAR = {diff:.2f} {ti.unit} ({z:.1f} combined standard errors)"
+           + ("; TI is affected by the lambda spacing (quadrature error): add windows where dH/dlambda is curved."
+              if status != "PASS" else "."))
+    return {"ti_minus_bar": float(diff), "z": float(z), "status": status, "diagnostic_message": msg}
