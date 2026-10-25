@@ -65,8 +65,8 @@ def fig_overlap(d):
     a.plot(lim, lim, color=INK2, lw=0.6, ls="--")
     a.axvline(0.03, color=OLD, lw=0.6, ls=":")
     a.axhline(0.03, color=OLD, lw=0.6, ls=":")
-    a.set(xscale="log", yscale="log", xlim=lim, ylim=lim, xlabel="smallest neighbouring overlap, multi-state MBAR",
-          ylabel="smallest neighbouring overlap, FEPCert")
+    a.set(xscale="log", yscale="log", xlim=lim, ylim=lim, xlabel="smallest overlap, multi-state MBAR",
+          ylabel="smallest overlap, FEPCert")
     a.legend(loc="lower right", fontsize=6)
     panel(a, "a")
 
@@ -76,7 +76,7 @@ def fig_overlap(d):
         dev = np.abs(x.ti_fepcert.to_numpy() - ref.loc[list(zip(x.system, x.leg))].to_numpy())
         b.scatter(x.ov_mbar_min, dev, s=14, marker=mk, color=col, lw=0, label=VARNAME[v], zorder=3)
     b.axvline(0.03, color=OLD, lw=0.6, ls=":")
-    b.set(xscale="log", xlim=lim, ylim=(-0.2, 7.0), xlabel="smallest neighbouring overlap, multi-state MBAR",
+    b.set(xscale="log", xlim=lim, ylim=(-0.2, 7.0), xlabel="smallest overlap, multi-state MBAR",
           ylabel="|TI $-$ BAR (all windows)| (kJ mol$^{-1}$)")
     b.legend(loc="upper right")
     panel(b, "b")
