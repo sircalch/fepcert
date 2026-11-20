@@ -58,16 +58,21 @@ dev = [
     "build>=0.10.0",
     "twine>=4.0.0"
 ]
+docs = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.26"
+]
 
 [project.scripts]
 fepcert = "fepcert.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/sircalch/fepcert"
-Documentation = "https://github.com/sircalch/fepcert#readme"
+Documentation = "https://sircalch.github.io/fepcert/"
 Repository = "https://github.com/sircalch/fepcert.git"
 "Bug Tracker" = "https://github.com/sircalch/fepcert/issues"
-Changelog = "https://github.com/sircalch/fepcert/blob/main/CHANGELOG.md"
+Changelog = "https://github.com/sircalch/fepcert/blob/master/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 include = ["fepcert*"]
