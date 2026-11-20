@@ -3,7 +3,7 @@ FEPCert: Automated Quality-Control, Phase Space Overlap, and Thermodynamic
 Cycle Closure Certification for Alchemical Free Energy Simulations (FEP, TI, BAR, MBAR).
 """
 
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 __author__ = "Andrés Monreal-Hernández"
 __license__ = "MIT"
 
