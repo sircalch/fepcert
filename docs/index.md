@@ -153,10 +153,10 @@ If you use FEPCert in your research, please cite:
 
 ```bibtex
 @software{monreal2026fepcert,
-  author = {Monreal-Hern{\'a}ndez, Andre},
+  author = {Monreal-Hernández, Andrés},
   title = {{FEPCert: An Open-Source Toolkit for Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification of Alchemical Free Energy Simulations}},
   year = {2026},
-  version = {1.0.0},
+  version = {1.2.1},
   publisher = {Zenodo},
   url = {https://github.com/sircalch/fepcert}
 }
