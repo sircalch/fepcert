@@ -2,6 +2,7 @@
 Manuscript Methods snippet generator, summary tables, and BibTeX citations for FEPCert.
 """
 
+from fepcert import __version__
 from typing import Dict, Any, Optional
 import os
 import pandas as pd
@@ -114,10 +115,10 @@ def generate_fepcert_manuscript_assets(
     # 3. BibTeX Citation
     bib_path = os.path.join(output_dir, "citation.bib")
     bib_content = """@software{monreal2026fepcert,
-  author = {Monreal-Hern\\'andez, Andre},
+  author = {Monreal-Hernández, Andrés},
   title = {{FEPCert: An Open-Source Toolkit for Quality-Control, Phase Space Overlap, and Thermodynamic Cycle Closure Certification of Alchemical Free Energy Simulations}},
   year = {2026},
-  version = {1.2.0},
+  version = {""" + __version__ + """},
   publisher = {Zenodo},
   url = {https://github.com/sircalch/fepcert}
 }
